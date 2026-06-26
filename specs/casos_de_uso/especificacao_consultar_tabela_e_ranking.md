@@ -21,15 +21,3 @@ Permite consultar as tabelas de classificação e ranking de desempenho das atl�
 O estado do sistema reflete a operação realizada de forma persistente, preservando a integridade referencial dos dados entre atléticas, times, competições e atletas.
 
 ---
-
-### Diagrama de Atividades Opcional (Mermaid)
-
-```mermaid
-flowchart TD
-    A[Acessar funcionalidade] --> B[Preencher/Selecionar dados]
-    B --> C{Dados válidos?}
-    C -- Sim --> D[Processar requisição]
-    D --> E[Exibir sucesso e atualizar tela]
-    C -- Não --> F[Exibir mensagem de erro]
-    F --> B
-```
