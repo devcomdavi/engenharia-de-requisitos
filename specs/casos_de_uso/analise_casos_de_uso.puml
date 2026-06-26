@@ -7,6 +7,7 @@ actor "Moderador" as Mod
 actor "Capitão" as Cap
 actor "Usuário Público" as Pub
 actor "SUAP" as Suap <<Sistema>>
+actor "Task Worker" as Worker <<Sistema>>
 
 rectangle "SGDU - Sistema de Gerenciamento Desportivo Universitário" {
   usecase "UC01 - Autenticar Usuário" as UC01
@@ -81,6 +82,12 @@ Admin --> UC16
 Mod --> UC16
 Cap --> UC16
 
+UC14 ..> Worker : <<trigger>>
+UC15 ..> Worker : <<trigger>>
+
 UC04 ..> UC17 : <<include>>
+UC09 ..> UC17 : <<include>>
+UC14 ..> UC16 : <<include>>
+UC15 ..> UC16 : <<include>>
 Suap --> UC17
 @enduml

@@ -3,34 +3,75 @@
 ## 1. Identificação
 - **Identificador**: UC02
 - **Nome do Caso de Uso**: Gerenciar Senha
-- **Atores Principais**: Administrador, Moderador, Capitão
+- **Atores Principais**: Administrador, Moderador, Capitão (usuário com cargo)
 - **Requisitos Funcionais Associados**: RF002, RF003
 
-## 2. Descrição
-Permite alteração de senha, incluindo a troca obrigatória no primeiro acesso ao sistema.
+## 2. Objetivo
+Permitir que usuários com cargo alterem sua senha voluntariamente e sejam obrigados a trocá-la no primeiro acesso após receberem um cargo, garantindo requisitos mínimos de segurança e auditoria.
 
 ## 3. Pré-condições
-- O usuário deve estar autenticado no sistema (exceto para usuários públicos, onde aplicável).
-- O usuário deve possuir as permissões adequadas de acordo com seu cargo (Administrador, Moderador ou Capitão).
+- O usuário possui uma conta ativa e credenciais iniciais (senha padrão igual à matrícula quando aplicável).
+- O usuário está autenticado para operações de troca voluntária.
+- Para primeiro acesso, o flag `primeiro_login = true` está ativo no perfil do usuário.
 
-## 4. Fluxo Principal
-1. O ator acessa o menu principal e seleciona a funcionalidade desejada.
-2. O sistema exibe a interface correspondente para interação (formulário, listagem ou painel).
-3. O ator insere, edita ou seleciona os dados pertinentes à operação.
-4. O ator aciona o botão de confirmação.
-5. O sistema valida as regras de negócio e os dados informados.
-6. O sistema processa a operação e atualiza o banco de dados.
-7. O sistema exibe uma notificação de sucesso e atualiza a interface com as novas informações.
+## 4. Pós-condições
+- A nova senha é persistida com hashing seguro (PBKDF2 + salt).
+- Se aplicável, o flag `primeiro_login` é removido e o usuário obtém acesso ao dashboard.
+- Um registro de auditoria da alteração é gravado (user_id, timestamp, IP, origem).
 
-## 5. Fluxos Alternativos e de Exceção
-- **[FA01] Dados Inválidos ou Incompletos**:
-  - Se, no passo 5, o sistema detectar que faltam dados obrigatórios ou que regras de negócio foram violadas (ex: matrícula repetida, time abaixo do limite, etc.), o sistema interrompe a operação e exibe uma mensagem de erro indicando o campo a ser corrigido.
-- **[FA02] Permissão Negada**:
-  - Caso o ator tente modificar registros aos quais não possui escopo (ex: Capitão tentando alterar atleta de outra atlética), o sistema bloqueia a ação, retorna um erro de acesso negado e registra a tentativa em log.
-- **[FA03] Dependências Ativas (Exclusão)**:
-  - Se o ator tentar excluir uma atlética com times ativos ou um time já inscrito em competições, o sistema exibe uma mensagem de alerta e cancela a exclusão, exigindo que as dependências sejam desfeitas primeiro.
+## 5. Fluxo Principal — Troca obrigatória (primeiro acesso)
+1. Usuário realiza login com matrícula e senha padrão.
+2. O sistema detecta `primeiro_login = true` e redireciona para a tela de troca de senha.
+3. O usuário fornece `nova_senha` e `confirmar_nova_senha` (o campo `senha_atual` pode ser omitido se a senha atual for a padrão).
+4. O sistema valida as regras de senha e verifica que `nova_senha != senha_atual`.
+5. Se as validações forem aprovadas, o sistema atualiza a senha (hash + salt), remove `primeiro_login` e redireciona o usuário ao dashboard.
+6. O sistema registra o evento de alteração em log e mostra confirmação de sucesso.
 
-## 6. Pós-condições
-O estado do sistema reflete a operação realizada de forma persistente, preservando a integridade referencial dos dados entre atléticas, times, competições e atletas.
+## 6. Fluxo Principal — Troca voluntária
+1. Usuário autenticado acessa a opção "Alterar senha" no menu de perfil.
+2. O usuário informa `senha_atual`, `nova_senha` e `confirmar_nova_senha`.
+3. O sistema valida `senha_atual` e as regras para `nova_senha`.
+4. Em caso de sucesso, o sistema atualiza a senha, registra o evento de auditoria e exibe mensagem de confirmação.
+
+## 7. Fluxos Alternativos e Exceções
+- **[FA01] Campos obrigatórios ausentes**: Exibir erro indicando os campos faltantes.
+- **[FA02] Confirmação divergente**: `nova_senha` e `confirmar_nova_senha` não coincidem → rejeitar e exibir mensagem.
+- **[FA03] Senha atual incorreta**: Ao validar `senha_atual` falha → exibir "Senha atual incorreta".
+- **[FA04] Senha viola regras**: `nova_senha` não atende critérios de segurança → listar regras faltantes.
+- **[FA05] Nova senha igual à atual**: Bloquear alteração e exibir erro específico.
+- **[FA06] Limite de tentativas**: Após N tentativas falhas, aplicar bloqueio temporário e registrar no log.
+
+## 8. Regras de Negócio / Validações
+- Senha mínima: 8 caracteres.
+- Pelo menos uma letra maiúscula, uma minúscula e um dígito.
+- Não pode ser uma senha comum (ver lista de senhas proibidas).
+- Não pode ser idêntica à senha atual.
+- Novas senhas devem ser passadas por verificador de força e fornecer feedback em tempo real.
+- Para contas administrativas, exigir confirmação por 2FA conforme política de segurança (opcional/por perfil).
+
+## 9. Mensagens de Erro e Feedback
+- Erros específicos por violação (ex.: "A senha deve ter ao menos 8 caracteres").
+- Mensagem clara para senha atual incorreta.
+- Indicação visual da força da senha e quais critérios faltam.
+- Em caso de sucesso: "Senha atualizada com sucesso." (para primeiro login também incluir: "Acesso liberado ao dashboard").
+
+## 10. Segurança e Auditoria
+- Armazenamento de senha com PBKDF2 + salt (conforme RNF004).
+- Formularios protegidos contra CSRF.
+- Rate limiting para tentativas de alteração e login.
+- Todas as alterações devem gerar event log com `user_id`, `timestamp`, `IP` e `origem` (primeiro_login|manual). Não registrar senhas em claro.
+
+## 11. Critérios de Aceitação
+- Usuário com `primeiro_login = true` é impedido de acessar o dashboard até trocar a senha.
+- Troca voluntária requer validação da `senha_atual` e aplicação das regras de senha.
+- Nova senha diferente da atual e persistida com hashing verificável.
+- Eventos de alteração são gravados com os campos obrigatórios de auditoria.
+- Cobertura de testes automatizados: fluxo de primeiro acesso, troca voluntária, validações de regras e tratamento de erros.
+
+## 12. Casos de Teste Sugeridos
+- Primeiro acesso: login com senha padrão → redirecionamento → troca → acesso ao dashboard.
+- Troca voluntária: senha atual correta → nova senha válida → sucesso.
+- Validação: novas senhas que falham cada regra individual devem retornar mensagens específicas.
+- Segurança: repetidas tentativas falhas resultam em bloqueio temporário.
 
 ---

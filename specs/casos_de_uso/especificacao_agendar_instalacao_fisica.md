@@ -1,41 +1,98 @@
+
 # Especificação de Caso de Uso: Agendar Instalação Física
 
 ## 1. Identificação
 - **Identificador**: UC13
 - **Nome do Caso de Uso**: Agendar Instalação Física
-- **Atores Principais**: Administrador, Moderador
+- **Atores Principais**: Administrador, Moderador, Capitão (quando autorizado)
 - **Requisitos Funcionais Associados**: RF023
 
-## 2. Descrição
-Permite o agendamento de espaços (quadras, ginásios) para evitar conflito de horários de partidas.
+## 2. Objetivo
+Permitir agendamento de espaços físicos (quadras, ginásios, campos) para partidas e atividades, evitando conflitos de horário e fornecendo verificações de disponibilidade, notificações e histórico de agendamentos.
 
 ## 3. Pré-condições
-- O usuário deve estar autenticado no sistema (exceto para usuários públicos, onde aplicável).
-- O usuário deve possuir as permissões adequadas de acordo com seu cargo (Administrador, Moderador ou Capitão).
+- Usuário autenticado com permissão para agendar (Admin/Moderador; Capitão nas suas instalações quando autorizado).
+- O local (instalação) já está cadastrado no sistema com atributos: nome, tipo, capacidade, horários disponíveis e restrições.
 
-## 4. Fluxo Principal
-1. O ator acessa o menu principal e seleciona a funcionalidade: Agendar Instalação Física.
-2. O sistema exibe a interface correspondente para interação (Formulário/painel).
-3. O ator insere os dados pertinentes à operação: Nome do local, data de uso, horário de uso
-4. O ator aciona o botão de confirmação.
-5. O sistema valida as regras de negócio (Se o nome e o horário estão disponíveis e existem) e os dados informados.
-6. O sistema processa a operação e atualiza o banco de dados.
-7. O sistema exibe uma notificação de sucesso e atualiza a interface com as novas informações.
+## 4. Pós-condições
+- Agendamento persistido com status `confirmado` ou `pendente` conforme regras de aprovação.
+- Conflitos evitados: nenhum outro agendamento confirmado para o mesmo local e intervalo de tempo.
+- Notificações enviadas aos responsáveis e partes interessadas.
+- Auditoria gravada com `user_id`, `local_id`, `inicio`, `fim`, `timestamp` e `IP`.
 
-## 5. Fluxos Alternativos e de Exceção
-editar dados, selecionar dados
-- **[FA01] Editar Dados Pertinentes**:
-  - O ator pode editar os dados (Nome do Local, data e hora de uso) já fornecidos.
-- **[FA02] Excluir Dados Pertinentes**:
- - O ator pode excluir os dados de agendamento (Nome do Local, data e hora de uso) fornecidos anteriormente.
-- **[FA03] Dados Inválidos ou Incompletos**:
-  - Se, no passo 5, o sistema detectar que faltam dados obrigatórios ou que regras de negócio foram violadas (ex: matrícula repetida, time abaixo do limite, etc.), o sistema interrompe a operação e exibe uma mensagem de erro indicando o campo a ser corrigido.
-- **[FA04] Permissão Negada**:
-  - Caso o ator tente modificar registros aos quais não possui escopo (ex: Capitão tentando alterar atleta de outra atlética), o sistema bloqueia a ação, retorna um erro de acesso negado e registra a tentativa em log.
-- **[FA05] Dependências Ativas (Exclusão)**:
-  - Se o ator tentar excluir uma atlética com times ativos ou um time já inscrito em competições, o sistema exibe uma mensagem de alerta e cancela a exclusão, exigindo que as dependências sejam desfeitas primeiro.
+## 5. Fluxos Principais
 
-## 6. Pós-condições
-O estado do sistema reflete a operação realizada de forma persistente, preservando a integridade referencial dos dados entre atléticas, times, competições e atletas.
+### 5.1 Agendar Instalação
+1. Ator seleciona "Agendar Instalação Física".
+2. Sistema exibe formulário com campos obrigatórios: `local`, `data_inicio`, `hora_inicio`, `data_fim` (ou duração), `hora_fim`, `finalidade` e `responsável`.
+3. Ator preenche os dados e submete solicitação.
+4. Sistema valida:
+   - `local` existe e está ativo;
+   - intervalo (`data_inicio`+`hora_inicio` a `data_fim`+`hora_fim`) é válido (início < fim);
+   - não há agendamento confirmado no mesmo `local` com interseção de tempo;
+   - respeita horários de abertura/fechamento e restrições do local (capacidade, tipo de atividade);
+   - se houver limite de reservas por usuário, respeitar a cota.
+5. Se as validações passarem, o sistema cria a solicitação com status `confirmado` (ou `pendente` se requer aprovação manual) e envia confirmação.
+
+### 5.2 Editar Agendamento
+1. Ator seleciona agendamento existente e escolhe "Editar".
+2. Sistema exibe formulário com dados atuais.
+3. Ator altera campos permitidos.
+4. Sistema revalida regras de disponibilidade e restrições.
+5. Em sucesso, atualiza o agendamento, registra auditoria e notifica interessados.
+
+### 5.3 Cancelar Agendamento
+1. Ator solicita cancelamento.
+2. Sistema verifica permissão e janela mínima para cancelamento (se aplicável).
+3. Se permitido, sistema marca agendamento como `cancelado`, atualiza disponibilidade e notifica partes.
+
+### 5.4 Consultar Disponibilidade
+1. Ator consulta calendário/agenda do `local` com filtros por data e horário.
+2. Sistema exibe blocos ocupados, vagas e eventos pendentes.
+
+## 6. Fluxos Alternativos e Exceções
+- **[FA01] Local inexistente/inativo**: Rejeitar solicitação e sugerir locais alternativos.
+- **[FA02] Conflito de horário**: Se existir interseção com agendamento confirmado, rejeitar e oferecer opções próximas (horários/lugares disponíveis).
+- **[FA03] Solicitação fora do horário permitido**: Rejeitar se fora do horário de funcionamento ou em período bloqueado.
+- **[FA04] Cota excedida**: Rejeitar se o usuário ultrapassou o número máximo de reservas simultâneas.
+- **[FA05] Aprovação necessária**: Se a reserva requer aprovação manual, criar status `pendente` e notificar aprovadores; permitir confirmação/rejeição com justificativa.
+- **[FA06] Erro de validação de dados**: Campos obrigatórios ausentes ou formatos inválidos → exibir erros por campo.
+
+## 7. Regras de Negócio
+- Agendamento não pode sobrepor agendamentos confirmados para o mesmo local.
+- Cada local tem horário de funcionamento e restrições (ex.: só treinos, só competições, necessidade de técnico).
+- Alguns agendamentos exigem aprovação manual (ex.: uso para eventos externos, uso fora do horário padrão).
+- Cancelamentos com pouca antecedência podem gerar penalidades ou bloqueios temporários.
+- Sistema deve suportar reservas recorrentes (opcional), respeitando limites e verificando conflitos em cada ocorrência.
+
+## 8. Mensagens de Erro e Feedback
+- "Local indisponível no período selecionado." (FA02).
+- "Horário inválido: data/hora de término anterior ao início." (FA06).
+- "Reserva criada e pendente de aprovação." (quando aplicável).
+- "Agendamento cancelado com sucesso." (após cancelamento).
+
+## 9. Notificações e Integrações
+- Enviar confirmação por e-mail/in-app para o responsável e aprovadores quando aplicável.
+- Integração com calendários (iCal) e exportação de eventos (opcional).
+- Painel de administradores com fila de solicitações pendentes e histórico.
+
+## 10. Segurança e Auditoria
+- Registrar todas as ações com `user_id`, `ação`, `local_id`, `inicio`, `fim`, `timestamp` e `IP`.
+- Aplicar controle de acesso RBAC (RNF005) para criação/edição/cancelamento.
+- Validar entradas para prevenir injeção e proteger endpoints com CSRF.
+
+## 11. Critérios de Aceitação
+- Não permitir criação de agendamento que cause conflito com agendamento confirmado existente.
+- Reservas que exigem aprovação ficam em `pendente` até decisão de aprovador.
+- Notificações são enviadas aos responsáveis após criação/alteração/cancelamento.
+- Consultas de disponibilidade exibem os blocos corretos em calendário.
+- Testes automatizados cobrindo criação, edição, cancelamento, conflito de horários e fluxo de aprovação.
+
+## 12. Casos de Teste Sugeridos
+- Criar agendamento válido: sucesso e bloco no calendário.
+- Tentar agendar em intervalo já ocupado: receber alternativa ou erro de conflito.
+- Editar agendamento mudando para horário conflituoso: operação rejeitada.
+- Cancelar agendamento dentro da janela permitida: cancelamento e notificação.
+- Criar reserva que requer aprovação: status `pendente` e notificação ao aprovador.
 
 ---

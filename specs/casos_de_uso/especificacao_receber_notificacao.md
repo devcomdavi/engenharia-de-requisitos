@@ -1,3 +1,4 @@
+
 # Especificação de Caso de Uso: Receber Notificação
 
 ## 1. Identificação
@@ -6,31 +7,80 @@
 - **Atores Principais**: Administrador, Moderador, Capitão
 - **Requisitos Funcionais Associados**: RF027
 
-## 2. Descrição
-Envia avisos sobre competições, inscrições e agendamentos de jogos.
+## 2. Objetivo
+Notificar usuários com cargo sobre eventos relevantes (novas competições, inscrições abertas, lembretes de jogos, avisos administrativos), entregando informações no canal e com a frequência apropriada ao papel do usuário.
 
 ## 3. Pré-condições
-- O usuário deve estar autenticado no sistema (exceto para usuários públicos, onde aplicável).
-- O usuário deve possuir as permissões adequadas de acordo com seu cargo (Administrador, Moderador ou Capitão).
+- Usuário com cargo (Administrador, Moderador ou Capitão) possui perfil ativo.
+- Preferências de notificação configuradas pelo usuário ou padrão do sistema.
+- Integração de envio (e-mail, push, in-app) configurada e disponível.
 
-## 4. Fluxo Principal
-1. O ator acessa o menu principal e seleciona a funcionalidade desejada.
-2. O sistema exibe a interface correspondente para interação (formulário, listagem ou painel).
-3. O ator insere, edita ou seleciona os dados pertinentes à operação.
-4. O ator aciona o botão de confirmação.
-5. O sistema valida as regras de negócio e os dados informados.
-6. O sistema processa a operação e atualiza o banco de dados.
-7. O sistema exibe uma notificação de sucesso e atualiza a interface com as novas informações.
+## 4. Pós-condições
+- Notificações registradas como enviadas/pendentes/entregues/falhadas conforme canal.
+- Usuários recebem aviso através dos canais habilitados conforme suas preferências.
+- Eventos de notificação são auditados (user_id responsável, tipo de notificação, destinatários, timestamp, resultado).
 
-## 5. Fluxos Alternativos e de Exceção
-- **[FA01] Dados Inválidos ou Incompletos**:
-  - Se, no passo 5, o sistema detectar que faltam dados obrigatórios ou que regras de negócio foram violadas (ex: matrícula repetida, time abaixo do limite, etc.), o sistema interrompe a operação e exibe uma mensagem de erro indicando o campo a ser corrigido.
-- **[FA02] Permissão Negada**:
-  - Caso o ator tente modificar registros aos quais não possui escopo (ex: Capitão tentando alterar atleta de outra atlética), o sistema bloqueia a ação, retorna um erro de acesso negado e registra a tentativa em log.
-- **[FA03] Dependências Ativas (Exclusão)**:
-  - Se o ator tentar excluir uma atlética com times ativos ou um time já inscrito em competições, o sistema exibe uma mensagem de alerta e cancela a exclusão, exigindo que as dependências sejam desfeitas primeiro.
+## 5. Tipos de Notificações
+- Novas competições criadas.
+- Abertura de inscrições para competições.
+- Lembretes de jogos agendados (configuráveis: 24h, 1h antes, etc.).
+- Avisos administrativos (manutenção, alteração de regras, comunicados gerais).
+- Atualizações de inscrições (confirmação, rejeição, lista de espera).
 
-## 6. Pós-condições
-O estado do sistema reflete a operação realizada de forma persistente, preservando a integridade referencial dos dados entre atléticas, times, competições e atletas.
+## 6. Fluxo Principal — Envio automático (sistema desencadeado)
+1. Evento gerador ocorre (ex.: competição criada, jogo agendado, prazo de inscrição se aproximando).
+2. Sistema identifica público-alvo (todos usuários com cargo, capitães das atléticas afetadas, etc.).
+3. Sistema consulta preferências de notificação e canais disponíveis.
+4. Sistema compõe mensagem substituindo template com dados do evento.
+5. Sistema envia notificações nos canais habilitados (in-app, e-mail, push) e registra resultados.
+6. Sistema re-tenta envio em caso de falha segundo política de retry e marca eventuais falhas para análise.
+
+## 7. Fluxo Principal — Envio manual (ator desencadeado)
+1. Administrador ou Moderador seleciona criar um comunicado/aviso.
+2. Ator define público-alvo, canal(es) e conteúdo ou seleciona template.
+3. Sistema realiza validações (conteúdo, público, permissões) e solicita confirmação.
+4. Após confirmação, sistema envia notificações conforme preferências e registra auditoria.
+
+## 8. Preferências do Usuário
+- Usuário pode habilitar/desabilitar canais: `in-app`, `e-mail`, `push`.
+- Configurar nível de detalhe: `todas`, `apenas críticas`, `somente administrativas`.
+- Configurar lembretes temporais (ex.: 24h antes, 1h antes).
+- Opt-out global disponível, respeitando avisos obrigatórios do sistema.
+
+## 9. Fluxos Alternativos e Exceções
+- **[FA01] Canal indisponível**: Se e-mail/push indisponível, marcar como falha e notificar por canal alternativo ou re-tentar.
+- **[FA02] Preferência de usuário bloqueia envio**: Se usuário optou por não receber determinado tipo, pular envio para esse usuário.
+- **[FA03] Template inválido**: Rejeitar envio manual até correção do template.
+- **[FA04] Volume elevado**: Ao enviar para grande massa, usar filas e rate limiting para evitar sobrecarga e spam.
+
+## 10. Regras de Negócio
+- Notificações de prazo e administrativas podem ser marcadas como obrigatórias (não permitidas para opt-out).
+- Mensagens devem ser localizadas para português (Brasil).
+- Sistema deve evitar envios duplicados salvo quando confirmado pelo usuário.
+- Logs de entrega devem reter status por X dias conforme política de auditoria.
+
+## 11. Mensagens de Erro e Feedback
+- Feedback claro em caso de falha de envio (ex.: "Falha ao enviar e-mail para user@exemplo.com").
+- Informar sucesso quando notificações forem agendadas/enviadas.
+- Para envios manuais, apresentar resumo com contagem de destinatários, canais e falhas.
+
+## 12. Segurança e Privacidade
+- Respeitar RNF003 e RNF004: não incluir dados sensíveis em notificações sem consentimento.
+- Limitar exposição de dados pessoais em notificações públicas.
+- Proteger endpoints de envio com RBAC (RNF005) e CSRF.
+
+## 13. Critérios de Aceitação
+- Usuários com cargo recebem notificações conforme preferência configurada.
+- Lembretes de jogos são disparados nos intervalos configurados.
+- Sistema registra entregas e falhas, com retry implementado para falhas transitórias.
+- Envio massivo não impacta negativamente a disponibilidade do sistema.
+- Testes automatizados cobrindo envios automáticos, envios manuais, preferências e tratamento de falhas.
+
+## 14. Casos de Teste Sugeridos
+- Notificação automática de nova competição: destinatários corretos e mensagem template preenchida.
+- Lembrete de jogo 24h antes: envio para capitães com canal habilitado.
+- Envio manual com público selecionado: resumo de envio e auditoria gravada.
+- Usuário com opt-out não recebe notificações não obrigatórias.
+- Simular falha de e-mail e validar retry e fallback para in-app.
 
 ---

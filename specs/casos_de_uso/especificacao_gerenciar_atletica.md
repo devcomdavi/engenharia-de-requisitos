@@ -1,3 +1,4 @@
+
 # Especificação de Caso de Uso: Gerenciar Atlética
 
 ## 1. Identificação
@@ -6,40 +7,84 @@
 - **Atores Principais**: Administrador, Moderador, Capitão
 - **Requisitos Funcionais Associados**: RF004, RF005, RF006, RF007
 
-## 2. Descrição
-Permite o cadastro, edição, listagem e exclusão de atléticas no sistema.
+## 2. Objetivo
+Cadastrar, editar, listar, atribuir responsável e excluir atléticas, garantindo unicidade de nome, consistência de vínculos e regras de integridade para exclusão.
 
 ## 3. Pré-condições
-- O usuário deve estar autenticado no sistema (exceto para usuários públicos, onde aplicável).
-- O usuário deve possuir as permissões adequadas de acordo com seu cargo (Administrador, Moderador ou Capitão).
+- Usuário autenticado com permissão adequada (Administrador/Moderador para todas as operações; Capitão apenas visualização/edição limitada à sua atlética).
+- Para atribuição de Capitão, o usuário indicado deve existir como atleta cadastrado e não possuir cargo anterior incompatível.
 
-## 4. Fluxo Principal
-1. O ator acessa o menu principal e seleciona a funcionalidade Gerenciar Atlética.
-2. O sistema exibe a interface correspondente para interação (Painel/Formulário).
-3. O ator insere os dados pertinentes à operação: nome da atlética (único no sistema, entre 3 e 255 caracteres), campus e curso.
-4. O ator aciona o botão de confirmação.
-5. O sistema valida as regras de negócio e os dados informados.
-6. O sistema processa a operação e atualiza o banco de dados.
-7. O sistema exibe uma notificação de sucesso e atualiza o sistema com as novas informações.
+## 4. Pós-condições
+- Atlética criada/atualizada/excluída conforme a operação, mantendo integridade referencial.
+- Ao atribuir Capitão, vínculo entre atleta e cargo é criado, perfil de usuário gerado (quando aplicável) e `primeiro_login` ativado.
+- Exclusão somente ocorre se não houver atletas cadastrados nem times criados; caso contrário, operação é impedida.
 
-## 5. Fluxos Alternativos e de Exceção
-editar, excluir, visualizar, atribuir capitão
-- **[FA01] Editar Dados**:
-  - O ator pode editar os dados pertinentes à operação: nome da atlética (único no sistema, entre 3 e 255 caracteres), campus e curso.
-- **[FA02] Excluir Dados**:
-  - O ator pode excluir os dados pertinentes à operação: nome da atlética (único no sistema, entre 3 e 255 caracteres), campus e curso.
-- **[FA03] Atribuir Capitão**:
-  - O ator pode atribuir um capitão como responsável da atlética criada.
-- **[FA04] Visualizar Atlética**:
-  - O Administrador e o Moderador visualizam todas as atléticas; o Capitão visualiza apenas a sua própria. As informações exibidas devem incluir: nome, campus, capitão responsável, número de atletas e número de times, além das ações disponíveis conforme o cargo.
-- **[FA05] Dados Inválidos ou Incompletos**:
-  - Se, no passo 5, o sistema detectar que faltam dados obrigatórios ou que regras de negócio foram violadas (ex: matrícula repetida, time abaixo do limite, etc.), o sistema interrompe a operação e exibe uma mensagem de erro indicando o campo a ser corrigido.
-- **[FA06] Permissão Negada**:
-  - Caso o ator tente modificar registros aos quais não possui escopo (ex: Capitão tentando alterar atleta de outra atlética), o sistema bloqueia a ação, retorna um erro de acesso negado e registra a tentativa em log.
-- **[FA07] Dependências Ativas (Exclusão)**:
-  - Se o ator tentar excluir uma atlética com times ativos ou um time já inscrito em competições, o sistema exibe uma mensagem de alerta e cancela a exclusão, exigindo que as dependências sejam desfeitas primeiro.
+## 5. Fluxos Principais
 
-## 6. Pós-condições
-O estado do sistema reflete a operação realizada de forma persistente, preservando a integridade referencial dos dados entre atléticas, times, competições e atletas.
+### 5.1 Criar Atlética
+1. Ator seleciona "Criar Atlética".
+2. Sistema exibe formulário com campos: `nome`, `campus`, `curso`, `responsavel_inicial` (opcional).
+3. Ator preenche e submete.
+4. Sistema valida: `nome` único (3–255 caracteres), `campus` e `curso` válidos.
+5. Se válido, sistema cria a atlética; se fornecido `responsavel_inicial`, valida e vincula o Capitão (criando perfil de usuário e marcando `primeiro_login`).
+6. Sistema confirma criação e exibe a nova atlética na listagem.
+
+### 5.2 Editar Atlética
+1. Ator seleciona uma atlética e escolhe "Editar".
+2. Sistema exibe formulário com dados atuais (nome editável conforme regras).
+3. Ator altera campos permitidos e submete.
+4. Sistema valida unicidade de `nome` e outras regras; em sucesso atualiza registro e grava auditoria.
+
+### 5.3 Atribuir/Remover Capitão
+1. Administrador/Moderador escolhe "Atribuir Capitão" para uma atlética.
+2. Sistema apresenta lista de atletas elegíveis (sem cargo) ou permite busca por matrícula.
+3. Ao selecionar atleta, sistema verifica elegibilidade e, se aprovado, atribui o cargo, gera perfil de usuário com senha padrão igual à matrícula e ativa `primeiro_login`.
+4. Remoção de cargo segue processo reverso e libera a atlética para novo responsável.
+
+### 5.4 Listar e Visualizar Atléticas
+1. Usuário acessa listagem de atléticas.
+2. Administrador/Moderador visualizam todas; Capitão visualiza apenas sua atlética.
+3. Cada item exibe: `nome`, `campus`, `capitão_responsavel`, `n_atletas`, `n_times`, e ações permitidas conforme cargo.
+
+### 5.5 Excluir Atlética
+1. Ator solicita exclusão de uma atlética.
+2. Sistema verifica pré-condições: nenhum atleta cadastrado e nenhum time criado vinculados à atlética.
+3. Se condição atendida, solicitar confirmação (modal) e, após confirmação, excluir (soft delete recomendado) e registrar auditoria.
+4. Se houver dependências, bloquear exclusão e exibir instruções para remoção das dependências.
+
+## 6. Fluxos Alternativos e Exceções
+- **[FA01] Nome duplicado**: Rejeitar criação/edição e exibir "Nome já cadastrado".
+- **[FA02] Campos obrigatórios ausentes**: Exibir erros por campo.
+- **[FA03] Capitão inválido**: Ao atribuir, se atleta possuir cargo ou vínculo incompatível, rejeitar e indicar motivo.
+- **[FA04] Exclusão impedida por dependências**: Informar número de atletas e times que impedem exclusão.
+- **[FA05] Permissão negada**: Capitão tentando editar outra atlética → bloquear e registrar tentativa.
+
+## 7. Regras de Negócio
+- `nome` da atlética: único no sistema, entre 3 e 255 caracteres.
+- Cada Capitão pode ser responsável por apenas uma atlética.
+- Ao atribuir cargo, criar perfil de usuário com e-mail válido e senha padrão igual à matrícula; ativar `primeiro_login`.
+- Exclusão é permitida apenas quando não existirem atletas cadastrados nem times criados; usar exclusão lógica para preservar histórico quando aplicável.
+
+## 8. Mensagens de Erro e Feedback
+- "Nome da atlética já existe." (FA01).
+- "Operação bloqueada: existem N atletas e M times vinculados à atlética." (FA04).
+- Confirmação clara em operações destrutivas: "Confirma exclusão da atlética X? Esta ação não pode ser desfeita.".
+
+## 9. Segurança e Auditoria
+- Registrar todas as operações com `user_id`, `ação`, `atletica_id`, `timestamp` e `IP`.
+- Aplicar controle de acesso RBAC (RNF005) para criação, edição, atribuição e exclusão.
+
+## 10. Critérios de Aceitação
+- Criar atlética com nome único e dados válidos resulta em novo registro visível na listagem.
+- Atribuição de Capitão cria perfil e ativa `primeiro_login`.
+- Edição respeita regras de unicidade e permissões.
+- Exclusão somente ocorre sem dependências e registra auditoria.
+- Testes automatizados cobrindo criação, edição, atribuição de cargo, listagem e exclusão bloqueada por dependências.
+
+## 11. Casos de Teste Sugeridos
+- Criar atlética com nome válido → sucesso e visibilidade na listagem.
+- Tentar criar com nome duplicado → erro de unicidade.
+- Atribuir capitão a uma atlética → perfil criado e `primeiro_login` ativado.
+- Tentativa de exclusão com atletas ou times vinculados → operação bloqueada com mensagem clara.
 
 ---
