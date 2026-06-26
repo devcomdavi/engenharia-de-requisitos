@@ -14,11 +14,11 @@ Permite que usuários com cargo realizem login no sistema utilizando matrícula 
 - O usuário deve possuir as permissões adequadas de acordo com seu cargo (Administrador, Moderador ou Capitão).
 
 ## 4. Fluxo Principal
-1. O ator acessa o menu principal e seleciona a funcionalidade desejada.
-2. O sistema exibe a interface correspondente para interação (formulário, listagem ou painel).
-3. O ator insere, edita ou seleciona os dados pertinentes à operação.
+1. O ator acessa o Painel de Login para preencher as credenciais.
+2. O sistema exibe a interface correspondente para interação (formulário de login).
+3. O ator insere os dados pertinentes à operação: Matrícula e Senha.
 4. O ator aciona o botão de confirmação.
-5. O sistema valida as regras de negócio e os dados informados.
+5. O sistema valida as regras de negócio (Se o usuário está cadastrado no sistema, se possui cargo atribuído e as informações da atlética) e os dados informados.
 6. O sistema processa a operação e atualiza o banco de dados.
 7. O sistema exibe uma notificação de sucesso e atualiza a interface com as novas informações.
 

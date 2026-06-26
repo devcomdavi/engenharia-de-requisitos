@@ -132,7 +132,7 @@ Os requisitos funcionais são descritos a seguir.
 
 - **[RF022]** - Como administrador, eu gostaria de gerenciar múltiplas edições dos jogos no sistema, para que o histórico das competições anteriores seja preservado e seja possível definir qual é a edição atual ativa.
 
-- **[RF023]** - Como administrador ou moderador, eu gostaria de gerenciar o agendamento das instalações físicas (quadras, ginásios, campos) para as partidas, para que os conflitos de horários entre modalidades sejam evitados. O sistema deve verificar a disponibilidade do espaço antes de confirmar um agendamento.
+- **[RF023]** - Como administrador ou moderador, eu gostaria de gerenciar o agendamento das instalações físicas (quadras, ginásios, campos) para as partidas, para que os conflitos de horários entre modalidades sejam evitados, inserindo o Nome do local, a data e hora de uso. O sistema deve verificar a disponibilidade do espaço antes de confirmar um agendamento.
 
 - **[RF024]** - Como administrador ou moderador, eu gostaria de gerar relatórios de participação dos atletas, com estatísticas por partida, modalidade e atlética, para que a Reitoria e a Coordenação de Esportes possam tomar decisões estratégicas com base em dados reais do evento.
 
