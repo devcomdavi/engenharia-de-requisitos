@@ -1,0 +1,86 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Administrador" as Admin
+actor "Moderador" as Mod
+actor "Capitão" as Cap
+actor "Usuário Público" as Pub
+actor "SUAP" as Suap <<Sistema>>
+
+rectangle "SGDU - Sistema de Gerenciamento Desportivo Universitário" {
+  usecase "UC01 - Autenticar Usuário" as UC01
+  usecase "UC02 - Gerenciar Senha" as UC02
+  usecase "UC03 - Gerenciar Atlética" as UC03
+  usecase "UC04 - Gerenciar Atleta" as UC04
+  usecase "UC05 - Gerenciar Time" as UC05
+  usecase "UC06 - Gerenciar Cargo" as UC06
+  usecase "UC07 - Visualizar Dashboard" as UC07
+  usecase "UC08 - Gerenciar Competição" as UC08
+  usecase "UC09 - Inscrever Time" as UC09
+  usecase "UC10 - Registrar Súmula" as UC10
+  usecase "UC11 - Consultar Tabela e Ranking" as UC11
+  usecase "UC12 - Gerenciar Edição dos Jogos" as UC12
+  usecase "UC13 - Agendar Instalação" as UC13
+  usecase "UC14 - Gerar Relatório e Exportação" as UC14
+  usecase "UC15 - Emitir Certificado" as UC15
+  usecase "UC16 - Receber Notificação" as UC16
+  usecase "UC17 - Validar Vínculo Acadêmico" as UC17
+}
+
+Admin --> UC01
+Mod --> UC01
+Cap --> UC01
+
+Admin --> UC02
+Mod --> UC02
+Cap --> UC02
+
+Admin --> UC03
+Mod --> UC03
+Cap --> UC03
+
+Admin --> UC04
+Mod --> UC04
+Cap --> UC04
+
+Admin --> UC05
+Mod --> UC05
+Cap --> UC05
+
+Admin --> UC06
+Admin --> UC07
+Mod --> UC07
+Cap --> UC07
+
+Admin --> UC08
+Mod --> UC08
+
+Admin --> UC09
+Mod --> UC09
+
+Admin --> UC10
+Mod --> UC10
+
+Admin --> UC11
+Mod --> UC11
+Cap --> UC11
+Pub --> UC11
+
+Admin --> UC12
+
+Admin --> UC13
+Mod --> UC13
+
+Admin --> UC14
+Mod --> UC14
+
+Admin --> UC15
+
+Admin --> UC16
+Mod --> UC16
+Cap --> UC16
+
+UC04 ..> UC17 : <<include>>
+Suap --> UC17
+@enduml
