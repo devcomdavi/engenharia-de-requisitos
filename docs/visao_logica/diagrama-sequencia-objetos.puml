@@ -1,0 +1,81 @@
+@startuml
+autonumber
+skinparam shadowing false
+skinparam monochrome false
+skinparam defaultFontName "Helvetica"
+skinparam ParticipantBackgroundColor #EAEDED
+skinparam ParticipantBorderColor #2C3E50
+skinparam ControlBackgroundColor #FADBD8
+skinparam ControlBorderColor #E74C3C
+skinparam EntityBackgroundColor #D4EFDF
+skinparam EntityBorderColor #27AE60
+skinparam DatabaseBackgroundColor #FCF3CF
+skinparam DatabaseBorderColor #F1C40F
+
+actor "Moderador / Administrador" as User
+boundary "PainelInscriçãoView" as View
+control "InscriçãoService" as Service
+entity "Competição" as Competicao
+entity "Time" as Time
+entity "Inscrição" as Inscricao
+database "Banco de Dados" as DB
+control "NotificationService" as Notif
+
+User -> View: Selecionar Time e solicitar inscrição na Competição
+activate View
+View -> Service: inscreverTime(time_id, competicao_id)
+activate Service
+
+Service -> Competicao: verificarInscricoesAbertas()
+activate Competicao
+Competicao --> Service: esta_aberta (Boolean)
+deactivate Competicao
+
+alt Inscrições Fechadas
+  Service --> View: erro "Período de inscrições fechado"
+else Inscrições Abertas
+  Service -> Time: obterDetalhesInscricao()
+  activate Time
+  Time --> Service: dados_time (modalidade, atletica, lista_atletas)
+  deactivate Time
+
+  Service -> Competicao: validarRegrasInscricao(dados_time)
+  activate Competicao
+  Competicao -> Competicao: validarModalidade(time_modalidade)
+  Competicao -> Competicao: validarMinimoAtletas(n_atletas)
+  Competicao -> Competicao: verificarInscricaoDuplicada(time_id)
+  Competicao --> Service: regras_atendidas (Boolean)
+  deactivate Competicao
+
+  alt Regras Violadas (Ex: Time Incompleto)
+    Service --> View: erro "Time não atende os requisitos mínimos da modalidade"
+  else Regras Atendidas
+    create Inscricao
+    Service -> Inscricao: new Inscrição(time_id, competicao_id, CONFIRMADA)
+    activate Inscricao
+    Inscricao -> DB: persistirInscrição()
+    activate DB
+    DB --> Inscricao: gravado
+    deactivate DB
+    Inscricao --> Service: objeto_inscrição
+    deactivate Inscricao
+
+    Service -> DB: gravarLogAuditoria(user_id, "INSCREVER_TIME", inscricao_id)
+    activate DB
+    DB --> Service: log_gravado
+    deactivate DB
+
+    Service -> Notif: dispararEmailInscricao(capitao_id, competicao_id)
+    activate Notif
+    Notif --> Service: email_enviado
+    deactivate Notif
+
+    Service --> View: confirmacao_inscricao
+  end
+end
+
+deactivate Service
+View --> User: Apresentar notificação de sucesso ou mensagem de erro
+deactivate View
+
+@enduml

@@ -1,0 +1,233 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam monochrome false
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName "Helvetica"
+skinparam ArrowColor #2C3E50
+skinparam BorderColor #2C3E50
+skinparam ClassBackgroundColor #EAEDED
+
+class Usuario {
+  - id: Integer
+  - matricula: String
+  - senha_hash: String
+  - email: String
+  - primeiro_login: Boolean
+  - last_login: DateTime
+  - cargo: CargoEnum
+  + autenticar(): Boolean
+  + alterar_senha(nova_senha: String): Boolean
+  + gerenciar_senha(): Boolean
+  + visualizar_dashboard(): DashboardStats
+}
+
+class Atlética {
+  - id: Integer
+  - nome: String
+  - campus: String
+  - curso: String
+  + criar_atletica(): Atlética
+  + editar_atletica(): Boolean
+  + excluir_atletica(): Boolean
+  + listar_atleticas(): List<Atlética>
+}
+
+class Atleta {
+  - id: Integer
+  - matricula: String
+  - nome_completo: String
+  - data_nascimento: Date
+  - sexo: Char
+  - vinculo_status: VinculoEnum
+  + cadastrar_atleta(): Atleta
+  + editar_atleta(): Boolean
+  + transferir_atleta(nova_atletica: Atlética): Boolean
+  + excluir_atleta(): Boolean
+  + validar_vinculo_academico(): Boolean
+}
+
+class Time {
+  - id: Integer
+  - nome: String
+  + criar_time(): Time
+  + editar_time(): Boolean
+  + listar_times(): List<Time>
+  + excluir_time(): Boolean
+}
+
+class Modalidade {
+  - id: Integer
+  - nome: String
+  - min_atletas: Integer
+  - max_atletas: Integer
+}
+
+class Competição {
+  - id: Integer
+  - data_inicio: Date
+  - data_fim: Date
+  - status: CompeticaoStatusEnum
+  + criar_competicao(): Competição
+  + gerenciar_competicao(): Boolean
+}
+
+class Inscrição {
+  - id: Integer
+  - data_inscricao: DateTime
+  - status: InscricaoStatusEnum
+  + inscrever_time(): Inscrição
+}
+
+class Partida {
+  - id: Integer
+  - data_hora: DateTime
+  - placar_casa: Integer
+  - placar_visitante: Integer
+  - status: PartidaStatusEnum
+}
+
+class Súmula {
+  - id: Integer
+  - resultado_detalhado: Text
+  - aprovada: Boolean
+  - versao: Integer
+  + iniciar_sumula()
+  + registrar_evento(evento: EventoPartida)
+  + confirmar_sumula()
+  + reabrir_sumula(justificativa: String)
+}
+
+class EventoPartida {
+  - id: Integer
+  - tipo: EventoTipoEnum
+  - minuto: Integer
+  - descricao: String
+}
+
+class InstalaçãoFísica {
+  - id: Integer
+  - nome: String
+  - tipo: String
+  - capacidade: Integer
+  - horarios_disponiveis: Text
+  - restricoes: Text
+}
+
+class Agendamento {
+  - id: Integer
+  - data_inicio: Date
+  - hora_inicio: Time
+  - data_fim: Date
+  - hora_fim: Time
+  - finalidade: String
+  - status: AgendamentoStatusEnum
+  + criar_agendamento(): Agendamento
+  + editar_agendamento(): Boolean
+  + cancelar_agendamento(): Boolean
+  + consultar_disponibilidade(): List<TimeSlot>
+}
+
+class EdiçãoDosJogos {
+  - id: Integer
+  - nome: String
+  - ano: Integer
+  - ativa: Boolean
+  + criar_edicao(): EdiçãoDosJogos
+  + definir_edicao_atual(): Boolean
+}
+
+class Certificado {
+  - id: Integer
+  - horas_complementares: Integer
+  - data_emissao: DateTime
+  - codigo_verificacao: UUID
+  - status_assinatura: String
+  + gerar_pdf()
+  + validar_certificado(codigo: UUID): Boolean
+  + enviar_por_email()
+}
+
+class LogAuditoria {
+  - id: Integer
+  - acao: String
+  - objeto_id: String
+  - timestamp: DateTime
+  - ip: String
+}
+
+' Enums
+enum CargoEnum {
+  ADMINISTRADOR
+  MODERADOR
+  CAPITAO
+}
+
+enum VinculoEnum {
+  PENDENTE
+  VALIDADO
+  VALIDADO_FALLBACK
+  REJEITADO
+}
+
+enum CompeticaoStatusEnum {
+  ABERTA
+  EM_ANDAMENTO
+  FINALIZADA
+}
+
+enum InscricaoStatusEnum {
+  CONFIRMADA
+  PENDENTE
+  LISTA_DE_ESPERA
+}
+
+enum PartidaStatusEnum {
+  AGENDADA
+  EM_ANDAMENTO
+  FINALIZADA
+}
+
+enum EventoTipoEnum {
+  GOL
+  PONTO
+  CARTAO_AMARELO
+  CARTAO_VERMELHO
+  SUBSTITUICAO
+  SET_PONTOS
+  MOVIMENTO
+  TEMPO
+}
+
+enum AgendamentoStatusEnum {
+  CONFIRMADO
+  PENDENTE
+  CANCELADO
+}
+
+' Relacionamentos e Multiplicidades
+Usuario "1" -- "0..1" Atleta : "associa-se a"
+Usuario "1" --> "1" CargoEnum : "possui"
+Atlética "1" -- "0..1" Usuario : "tem como Capitão responsável"
+Atleta "0..*" --> "1" Atlética : "pertence a"
+Atleta "0..*" -- "0..*" Time : "composto por"
+Time "0..*" --> "1" Atlética : "pertence a"
+Time "0..*" --> "1" Modalidade : "joga na"
+Competição "0..*" --> "1" Modalidade : "específica para"
+Competição "0..*" --> "1" EdiçãoDosJogos : "vinculada a"
+Inscrição "0..*" --> "1" Time : "inscreve"
+Inscrição "0..*" --> "1" Competição : "na"
+Partida "0..*" --> "1" Competição : "realizada na"
+Partida "1" -- "1" Súmula : "contém"
+Partida "0..*" --> "1" Time : "time_casa"
+Partida "0..*" --> "1" Time : "time_visitante"
+Partida "0..*" --> "1" InstalaçãoFísica : "localizada em"
+Súmula "1" *-- "0..*" EventoPartida : "contém eventos"
+EventoPartida "0..*" --> "1" Atleta : "envolve"
+Agendamento "0..*" --> "1" InstalaçãoFísica : "reserva"
+Agendamento "0..*" --> "1" Usuario : "agendado por"
+Certificado "0..*" --> "1" Atleta : "emitido para"
+Certificado "0..*" --> "1" Competição : "referente a"
+LogAuditoria "0..*" --> "1" Usuario : "realizado por"
+
+@enduml
