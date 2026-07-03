@@ -32,43 +32,7 @@ O fluxo e as validações descritas a seguir representam o comportamento interno
 ## Diagrama de Atividades
 O diagrama abaixo detalha visualmente o fluxo de decisões, desvios e ações executados pelo método. Ele foi modelado utilizando o formato PlantUML.
 
-```plantuml
-@startuml
-skinparam shadowing false
-skinparam monochrome false
-skinparam ActivityBackgroundColor #F8F9F9
-skinparam ActivityBorderColor #2C3E50
-
-start
-:Solicitar `criar_atletica(nome, campus, curso, capitao_id)`;
-:Validar se o nome é único no sistema;
-if (Nome já existe?) then (Sim)
-  :Lançar erro "Nome da atlética já está em uso";
-  stop
-else (Não)
-  :Validar tamanho do nome (entre 3 e 255 caracteres);
-  if (Tamanho inválido?) then (Sim)
-    :Lançar erro "Nome deve ter entre 3 e 255 caracteres";
-    stop
-  else (Não)
-    if (capitao_id foi informado?) then (Sim)
-      :Buscar Usuário capitão no banco de dados;
-      if (Usuário já é responsável por outra atlética?) then (Sim)
-        :Lançar erro "Este capitão já é responsável por outra atlética";
-        stop
-      else (Não)
-        :Associar Usuário como Capitão responsável;
-      endif
-    else (Não)
-    endif
-    :Criar registro da Atlética no banco de dados;
-    :Gravar LogAuditoria (acao = CRIACAO_ATLETICA, id_atletica);
-    :Retornar instância da Atlética criada;
-  endif
-endif
-stop
-@enduml
-```
+![Diagrama de Atividades](criar-atletica.png)
 
 ## Links Relacionados
 - **Arquivo de Diagrama:** [criar_atletica.puml](criar_atletica.puml)

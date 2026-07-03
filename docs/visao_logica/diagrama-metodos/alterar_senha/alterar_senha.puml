@@ -14,13 +14,13 @@ else (Não)
   :Validar critérios mínimos de segurança;
   split
     :Verificar tamanho mínimo (>= 8 caracteres);
-  split etc
+  split again
     :Verificar pelo menos 1 letra maiúscula;
-  split etc
+  split again
     :Verificar pelo menos 1 letra minúscula;
-  split etc
+  split again
     :Verificar pelo menos 1 número;
-  split etc
+  split again
     :Verificar se não é uma senha comum (dicionário);
   end split
   

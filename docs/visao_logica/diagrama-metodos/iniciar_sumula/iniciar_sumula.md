@@ -31,31 +31,7 @@ O fluxo e as validações descritas a seguir representam o comportamento interno
 ## Diagrama de Atividades
 O diagrama abaixo detalha visualmente o fluxo de decisões, desvios e ações executados pelo método. Ele foi modelado utilizando o formato PlantUML.
 
-```plantuml
-@startuml
-skinparam shadowing false
-skinparam monochrome false
-skinparam ActivityBackgroundColor #F8F9F9
-skinparam ActivityBorderColor #2C3E50
-
-start
-:Solicitar `iniciar_sumula(partida_id)`;
-:Buscar Partida no banco de dados;
-if (Partida está com status = AGENDADA?) then (Não)
-  :Lançar erro "Não é possível iniciar súmula de partida que não está agendada";
-  stop
-else (Sim)
-  :Alterar status da Partida para EM_ANDAMENTO;
-  :Instanciar nova Súmula (aprovada = False, versao = 1);
-  :Associar Súmula à Partida;
-  :Gravar Súmula no banco de dados;
-  :Gravar LogAuditoria (acao = INICIAR_SUMULA, id_sumula, id_partida);
-  :Notificar atualização em tempo real de início de jogo;
-  :Retornar instância de Súmula;
-endif
-stop
-@enduml
-```
+![Diagrama de Atividades](iniciar-sumula.png)
 
 ## Links Relacionados
 - **Arquivo de Diagrama:** [iniciar_sumula.puml](iniciar_sumula.puml)

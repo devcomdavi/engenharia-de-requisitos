@@ -32,44 +32,7 @@ O fluxo e as validações descritas a seguir representam o comportamento interno
 ## Diagrama de Atividades
 O diagrama abaixo detalha visualmente o fluxo de decisões, desvios e ações executados pelo método. Ele foi modelado utilizando o formato PlantUML.
 
-```plantuml
-@startuml
-skinparam shadowing false
-skinparam monochrome false
-skinparam ActivityBackgroundColor #F8F9F9
-skinparam ActivityBorderColor #2C3E50
-
-start
-:Solicitar `excluir_atletica(id_atletica)`;
-:Verificar cargo do usuário autenticado;
-if (Usuário é Administrador ou Moderador?) then (Sim)
-  :Buscar atlética no banco de dados;
-  if (Atlética possui atletas cadastrados?) then (Sim)
-    :Lançar erro "Não é possível excluir atlética com atletas ativos";
-    stop
-  else (Não)
-    if (Atlética possui times cadastrados?) then (Sim)
-      :Lançar erro "Não é possível excluir atlética com times ativos";
-      stop
-    else (Não)
-      if (Confirmado exclusão?) then (Não)
-        :Lançar erro "Confirmação de exclusão pendente";
-        stop
-      else (Sim)
-        :Liberar vínculo do Capitão responsável (se houver);
-        :Remover Atlética do banco de dados;
-        :Gravar LogAuditoria (acao = EXCLUSAO_ATLETICA, id_atletica);
-        :Retornar true;
-      endif
-    endif
-  endif
-else (Não)
-  :Lançar erro "Acesso Negado: Apenas Administradores ou Moderadores podem excluir atléticas";
-  stop
-endif
-stop
-@enduml
-```
+![Diagrama de Atividades](excluir-atletica.png)
 
 ## Links Relacionados
 - **Arquivo de Diagrama:** [excluir_atletica.puml](excluir_atletica.puml)

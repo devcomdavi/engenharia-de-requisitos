@@ -34,46 +34,7 @@ O fluxo e as validações descritas a seguir representam o comportamento interno
 ## Diagrama de Atividades
 O diagrama abaixo detalha visualmente o fluxo de decisões, desvios e ações executados pelo método. Ele foi modelado utilizando o formato PlantUML.
 
-```plantuml
-@startuml
-skinparam shadowing false
-skinparam monochrome false
-skinparam ActivityBackgroundColor #F8F9F9
-skinparam ActivityBorderColor #2C3E50
-
-start
-:Solicitar `autenticar(matricula, senha)`;
-:Buscar Usuário no banco de dados pela matrícula;
-if (Usuário encontrado?) then (Não)
-  :Lançar erro "Matrícula ou senha incorretos";
-  stop
-else (Sim)
-  :Verificar hash da senha (PBKDF2 com Salt);
-  if (Senha é válida?) then (Não)
-    :Lançar erro "Matrícula ou senha incorretos";
-    stop
-  else (Sim)
-    if (Usuário possui cargo atribuído?) then (Não)
-      :Lançar erro "Usuário não possui permissões administrativas";
-      stop
-    else (Sim)
-      if (primeiro_login é True?) then (Sim)
-        :Sinalizar status "MUDANCA_DE_SENHA_OBRIGATORIA";
-        :Redirecionar para página de alteração de senha;
-        stop
-      else (Não)
-        :Atualizar campo last_login para data/hora atual;
-        :Carregar informações da atlética vinculada;
-        :Iniciar sessão do usuário (RBAC ativado);
-        :Gravar LogAuditoria (acao = LOGIN_SUCESSO, id_usuario);
-        :Retornar true;
-      endif
-    endif
-  endif
-endif
-stop
-@enduml
-```
+![Diagrama de Atividades](autenticar.png)
 
 ## Links Relacionados
 - **Arquivo de Diagrama:** [autenticar.puml](autenticar.puml)

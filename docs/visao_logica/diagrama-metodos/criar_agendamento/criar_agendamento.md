@@ -38,54 +38,7 @@ O fluxo e as validações descritas a seguir representam o comportamento interno
 ## Diagrama de Atividades
 O diagrama abaixo detalha visualmente o fluxo de decisões, desvios e ações executados pelo método. Ele foi modelado utilizando o formato PlantUML.
 
-```plantuml
-@startuml
-skinparam shadowing false
-skinparam monochrome false
-skinparam ActivityBackgroundColor #F8F9F9
-skinparam ActivityBorderColor #2C3E50
-
-start
-:Solicitar `criar_agendamento(local, data_inicio, hora_inicio, data_fim, hora_fim, finalidade)`;
-:Buscar `InstalaçãoFísica` no banco de dados;
-
-if (Instalação existe e está ativa?) then (Não)
-  :Lançar erro "Instalação física inexistente ou inativa";
-  stop
-else (Sim)
-  :Buscar agendamentos com status CONFIRMADO no mesmo local e no mesmo intervalo de tempo;
-  if (Existe sobreposição de horário?) then (Sim)
-    :Consultar slots livres sugeridos próximos;
-    :Lançar erro "Conflito de horário: local ocupado";
-    stop
-  else (Não)
-    :Validar se o intervalo solicitado está dentro dos limites de funcionamento do local;
-    if (Fora do horário de funcionamento?) then (Sim)
-      :Lançar erro "Local fechado para reservas no horário solicitado";
-      stop
-    else (Não)
-      :Contabilizar reservas do Usuário no mesmo mês;
-      if (Quantidade excede cota permitida?) then (Sim)
-        :Lançar erro "Cota de agendamentos excedida";
-        stop
-      else (Não)
-        if (Finalidade exige aprovação manual?) then (Sim)
-          :Criar registro com status = PENDENTE;
-          :Enviar notificação de aprovação pendente para Moderadores;
-          :Gravar LogAuditoria (acao = SOLICITACAO_RESERVA, status = PENDENTE);
-        else (Não)
-          :Criar registro com status = CONFIRMADO;
-          :Enviar notificação de sucesso ao Capitão/Responsável;
-          :Gravar LogAuditoria (acao = CRIACAO_RESERVA, status = CONFIRMADO);
-        endif
-        :Retornar registro de Agendamento;
-      endif
-    endif
-  endif
-endif
-stop
-@enduml
-```
+![Diagrama de Atividades](criar-agendamento.png)
 
 ## Links Relacionados
 - **Arquivo de Diagrama:** [criar_agendamento.puml](criar_agendamento.puml)

@@ -33,45 +33,7 @@ O fluxo e as validações descritas a seguir representam o comportamento interno
 ## Diagrama de Atividades
 O diagrama abaixo detalha visualmente o fluxo de decisões, desvios e ações executados pelo método. Ele foi modelado utilizando o formato PlantUML.
 
-```plantuml
-@startuml
-skinparam shadowing false
-skinparam monochrome false
-skinparam ActivityBackgroundColor #F8F9F9
-skinparam ActivityBorderColor #2C3E50
-
-start
-:Solicitar `editar_atletica(id_atletica, novo_nome, novo_campus, novo_curso)`;
-:Verificar cargo do usuário autenticado;
-if (Usuário é Administrador ou Moderador?) then (Sim)
-  :Permissão concedida;
-else (Não / É Capitão)
-  if (Usuário é Capitão responsável por ESTA atlética?) then (Sim)
-    :Permissão concedida;
-  else (Não)
-    :Lançar erro "Acesso Negado: Capitão só pode editar sua própria atlética";
-    stop
-  endif
-endif
-
-:Validar se o novo nome (se alterado) é único no sistema;
-if (Nome duplicado?) then (Sim)
-  :Lançar erro "Nome da atlética já está em uso";
-  stop
-else (Não)
-  :Validar tamanho do nome (entre 3 e 255 caracteres);
-  if (Tamanho inválido?) then (Sim)
-    :Lançar erro "Nome deve ter entre 3 e 255 caracteres";
-    stop
-  else (Não)
-    :Atualizar nome, campus e curso no banco de dados;
-    :Gravar LogAuditoria (acao = EDICAO_ATLETICA, id_atletica);
-    :Retornar true;
-  endif
-endif
-stop
-@enduml
-```
+![Diagrama de Atividades](editar-atletica.png)
 
 ## Links Relacionados
 - **Arquivo de Diagrama:** [editar_atletica.puml](editar_atletica.puml)

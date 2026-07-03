@@ -45,54 +45,7 @@ O fluxo e as validações descritas a seguir representam o comportamento interno
 ## Diagrama de Atividades
 O diagrama abaixo detalha visualmente o fluxo de decisões, desvios e ações executados pelo método. Ele foi modelado utilizando o formato PlantUML.
 
-```plantuml
-@startuml
-skinparam shadowing false
-skinparam monochrome false
-skinparam ActivityBackgroundColor #F8F9F9
-skinparam ActivityBorderColor #2C3E50
-
-start
-:Iniciar `validar_vinculo_academico()`;
-:Obter matrícula do atleta;
-
-if (Serviço externo SUAP está conectado?) then (Sim)
-  :Chamar API SUAP (matricula);
-  if (SUAP responde com estudante ativo?) then (Sim)
-    :Extrair curso e campus da resposta do SUAP;
-    :Atualizar status do Atleta para VALIDADO;
-    :Gravar log de auditoria (origem = SUAP, resultado = SUCESSO);
-    :Retornar true;
-  else (Não / Estudante inativo ou inexistente)
-    :Atualizar status do Atleta para REJEITADO;
-    :Gravar log de auditoria (origem = SUAP, resultado = REJEITADO);
-    :Lançar erro de vínculo inativo;
-    :Retornar false;
-  endif
-else (Não / Timeout ou falha de conexão)
-  :Registrar indisponibilidade do SUAP no log de sistema;
-  :Acionar Fallback por Formato de Matrícula;
-  if (Matrícula atende expressão regular (regex) institucional?) then (Sim)
-    if (Matrícula já está cadastrada para outro atleta?) then (Sim)
-      :Gravar log de auditoria (origem = FALLBACK, resultado = DUPLICADO);
-      :Lançar erro de duplicidade de matrícula;
-      :Retornar false;
-    else (Não)
-      :Atualizar status do Atleta para VALIDADO_FALLBACK;
-      :Enfileirar ID do Atleta para fila de reconciliação assíncrona;
-      :Gravar log de auditoria (origem = FALLBACK, resultado = OK_PROVISORIO);
-      :Retornar true;
-    endif
-  else (Não)
-    :Atualizar status do Atleta para REJEITADO;
-    :Gravar log de auditoria (origem = FALLBACK, resultado = REGEX_FALHOU);
-    :Lançar erro de formato de matrícula inválida;
-    :Retornar false;
-  endif
-endif
-stop
-@enduml
-```
+![Diagrama de Atividades](validar-vinculo-academico.png)
 
 ## Links Relacionados
 - **Arquivo de Diagrama:** [validar_vinculo_academico.puml](validar_vinculo_academico.puml)

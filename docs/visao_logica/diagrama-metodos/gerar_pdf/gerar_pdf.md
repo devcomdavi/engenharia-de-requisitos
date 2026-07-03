@@ -35,35 +35,7 @@ O fluxo e as validações descritas a seguir representam o comportamento interno
 ## Diagrama de Atividades
 O diagrama abaixo detalha visualmente o fluxo de decisões, desvios e ações executados pelo método. Ele foi modelado utilizando o formato PlantUML.
 
-```plantuml
-@startuml
-skinparam shadowing false
-skinparam monochrome false
-skinparam ActivityBackgroundColor #F8F9F9
-skinparam ActivityBorderColor #2C3E50
-
-start
-:Solicitar `gerar_pdf(atleta_id, competicao_id)`;
-:Buscar Atleta e Competição no banco de dados;
-:Verificar se Atleta participou da Competição (registros de Partida/Súmula);
-if (Atleta possui participação válida?) then (Não)
-  :Lançar erro "Atleta não possui participações registradas nesta competição";
-  stop
-else (Sim)
-  :Gerar código de validação único (UUID);
-  :Instanciar registro Certificado (status_assinatura = PENDENTE);
-  :Carregar template do certificado (HTML/SVG);
-  :Preencher campos do certificado (Nome, Modalidade, Atlética, Horas, UUID);
-  :Aplicar assinatura digital institucional;
-  :Converter template preenchido em arquivo PDF;
-  :Salvar arquivo PDF no armazenamento de arquivos (Storage);
-  :Atualizar registro de Certificado no banco (status = GERADO, link_pdf, status_assinatura = ASSINADO);
-  :Gravar LogAuditoria (acao = EMISSAO_CERTIFICADO, certificado_id);
-  :Retornar arquivo PDF ou caminho do arquivo;
-endif
-stop
-@enduml
-```
+![Diagrama de Atividades](gerar-pdf.png)
 
 ## Links Relacionados
 - **Arquivo de Diagrama:** [gerar_pdf.puml](gerar_pdf.puml)

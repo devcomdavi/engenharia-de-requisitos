@@ -36,52 +36,7 @@ O fluxo e as validações descritas a seguir representam o comportamento interno
 ## Diagrama de Atividades
 O diagrama abaixo detalha visualmente o fluxo de decisões, desvios e ações executados pelo método. Ele foi modelado utilizando o formato PlantUML.
 
-```plantuml
-@startuml
-skinparam shadowing false
-skinparam monochrome false
-skinparam ActivityBackgroundColor #F8F9F9
-skinparam ActivityBorderColor #2C3E50
-
-start
-:Solicitar `cadastrar_atleta(matricula, nome_completo, data_nascimento, sexo, id_atletica)`;
-:Verificar cargo do usuário autenticado;
-if (Usuário é Administrador ou Moderador?) then (Sim)
-  :Permissão concedida;
-else (Não / É Capitão)
-  if (Id_atletica corresponde à atlética do Capitão?) then (Sim)
-    :Permissão concedida;
-  else (Não)
-    :Lançar erro "Acesso Negado: Capitão só pode cadastrar atletas na sua própria atlética";
-    stop
-  endif
-endif
-
-:Validar matrícula (deve ter entre 6 e 10 dígitos numéricos);
-if (Matrícula possui formato inválido?) then (Sim)
-  :Lançar erro "Matrícula deve conter de 6 a 10 dígitos numéricos";
-  stop
-else (Não)
-  :Verificar se matrícula já existe no sistema;
-  if (Matrícula duplicada?) then (Sim)
-    :Lançar erro "Atleta com esta matrícula já está cadastrado";
-    stop
-  else (Não)
-    :Calcular idade com base na data_nascimento;
-    if (Idade < 14 ou Idade > 100?) then (Sim)
-      :Lançar erro "Idade do atleta deve estar entre 14 e 100 anos";
-      stop
-    else (Não)
-      :Criar registro do Atleta com status_vinculo = PENDENTE;
-      :Executar validação de vínculo acadêmico (validar_vinculo_academico());
-      :Gravar LogAuditoria (acao = CADASTRO_ATLETA, id_atleta);
-      :Retornar instância do Atleta criado;
-    endif
-  endif
-endif
-stop
-@enduml
-```
+![Diagrama de Atividades](cadastrar-atleta.png)
 
 ## Links Relacionados
 - **Arquivo de Diagrama:** [cadastrar_atleta.puml](cadastrar_atleta.puml)

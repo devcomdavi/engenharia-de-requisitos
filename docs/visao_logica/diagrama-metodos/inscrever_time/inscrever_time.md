@@ -31,39 +31,7 @@ O fluxo e as validações descritas a seguir representam o comportamento interno
 ## Diagrama de Atividades
 O diagrama abaixo detalha visualmente o fluxo de decisões, desvios e ações executados pelo método. Ele foi modelado utilizando o formato PlantUML.
 
-```plantuml
-@startuml
-skinparam shadowing false
-skinparam monochrome false
-skinparam ActivityBackgroundColor #F8F9F9
-skinparam ActivityBorderColor #2C3E50
-
-start
-:Solicitar `inscrever_time(time_id, competicao_id)`;
-:Buscar Time e Competição no banco de dados;
-if (Competição com status = ABERTA?) then (Não)
-  :Lançar erro "Inscrições encerradas ou competição não iniciada";
-  stop
-else (Sim)
-  :Verificar Modalidade associada à Competição;
-  :Contar número de atletas vinculados ao Time;
-  if (Atletas no time < Modalidade.min_atletas?) then (Sim)
-    :Lançar erro "O time não possui o número mínimo de atletas exigido pela modalidade";
-    stop
-  else (Não)
-    if (Atletas no time > Modalidade.max_atletas?) then (Sim)
-      :Lançar erro "O time excede o número máximo de atletas exigido pela modalidade";
-      stop
-    else (Não)
-      :Criar registro de Inscrição com status = CONFIRMADA;
-      :Gravar LogAuditoria (acao = INSCRICAO_TIME, id_time, id_competicao);
-      :Retornar registro de Inscrição;
-    endif
-  endif
-endif
-stop
-@enduml
-```
+![Diagrama de Atividades](inscrever-time.png)
 
 ## Links Relacionados
 - **Arquivo de Diagrama:** [inscrever_time.puml](inscrever_time.puml)

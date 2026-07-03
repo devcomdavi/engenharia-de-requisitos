@@ -16,9 +16,9 @@ endif
 :Para cada atlética na lista;
 split
   :Contar número de atletas cadastrados;
-split etc
+split again
   :Contar número de times cadastrados;
-split etc
+split again
   :Buscar nome do capitão responsável;
 end split
 :Montar lista de resposta estruturada;

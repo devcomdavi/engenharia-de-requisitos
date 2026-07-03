@@ -35,46 +35,7 @@ O fluxo e as validações descritas a seguir representam o comportamento interno
 ## Diagrama de Atividades
 O diagrama abaixo detalha visualmente o fluxo de decisões, desvios e ações executados pelo método. Ele foi modelado utilizando o formato PlantUML.
 
-```plantuml
-@startuml
-skinparam shadowing false
-skinparam monochrome false
-skinparam ActivityBackgroundColor #F8F9F9
-skinparam ActivityBorderColor #2C3E50
-
-start
-:Solicitar `enviar_por_email(certificado_id)`;
-:Buscar Certificado no banco de dados;
-if (Certificado existe?) then (Não)
-  :Lançar erro "Certificado inexistente";
-  stop
-else (Sim)
-  if (Arquivo PDF do Certificado está gerado?) then (Não)
-    :Executar `gerar_pdf()` para o atleta correspondente;
-  else (Sim)
-  endif
-  :Recuperar e-mail do atleta associado;
-  if (Atleta possui e-mail cadastrado?) then (Não)
-    :Lançar erro "E-mail do atleta não encontrado para envio";
-    stop
-  else (Sim)
-    :Construir corpo do e-mail com instruções de autenticidade;
-    :Anexar o arquivo PDF do Certificado;
-    :Chamar serviço de envio de e-mails (SMTP/API);
-    if (Envio foi bem-sucedido?) then (Sim)
-      :Atualizar status de envio do Certificado para ENVIADO;
-      :Gravar LogAuditoria (acao = ENVIO_EMAIL_CERTIFICADO, certificado_id);
-      :Retornar true;
-    else (Não)
-      :Gravar erro no log de sistema;
-      :Lançar erro "Falha na comunicação com o servidor de e-mail";
-      stop
-    endif
-  endif
-endif
-stop
-@enduml
-```
+![Diagrama de Atividades](enviar-por-email.png)
 
 ## Links Relacionados
 - **Arquivo de Diagrama:** [enviar_por_email.puml](enviar_por_email.puml)

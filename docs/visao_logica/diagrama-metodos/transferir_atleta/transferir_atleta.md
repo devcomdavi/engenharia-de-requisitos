@@ -32,40 +32,7 @@ O fluxo e as validações descritas a seguir representam o comportamento interno
 ## Diagrama de Atividades
 O diagrama abaixo detalha visualmente o fluxo de decisões, desvios e ações executados pelo método. Ele foi modelado utilizando o formato PlantUML.
 
-```plantuml
-@startuml
-skinparam shadowing false
-skinparam monochrome false
-skinparam ActivityBackgroundColor #F8F9F9
-skinparam ActivityBorderColor #2C3E50
-
-start
-:Solicitar `transferir_atleta(atleta_id, nova_atletica_id)`;
-:Verificar cargo do usuário autenticado;
-if (Usuário é Administrador ou Moderador?) then (Sim)
-  :Buscar atleta no banco de dados;
-  :Buscar times nos quais o atleta está cadastrado;
-  if (Atleta pertence a algum time em competição ativa?) then (Sim)
-    :Lançar erro "Não é possível transferir atleta vinculado a times em competições ativas";
-    stop
-  else (Não)
-    if (Confirmada transferência pelo usuário?) then (Não)
-      :Lançar erro "Confirmação de transferência pendente";
-      stop
-    else (Sim)
-      :Remover atleta dos times antigos (não ativos);
-      :Atualizar campo atlética do atleta para nova_atletica_id;
-      :Gravar LogAuditoria (acao = TRANSFERENCIA_ATLETA, atleta_id, nova_atletica_id);
-      :Retornar true;
-    endif
-  endif
-else (Não)
-  :Lançar erro "Acesso Negado: Apenas Administradores ou Moderadores podem transferir atletas";
-  stop
-endif
-stop
-@enduml
-```
+![Diagrama de Atividades](transferir-atleta.png)
 
 ## Links Relacionados
 - **Arquivo de Diagrama:** [transferir_atleta.puml](transferir_atleta.puml)

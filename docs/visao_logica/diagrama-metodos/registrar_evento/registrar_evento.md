@@ -32,44 +32,7 @@ O fluxo e as validações descritas a seguir representam o comportamento interno
 ## Diagrama de Atividades
 O diagrama abaixo detalha visualmente o fluxo de decisões, desvios e ações executados pelo método. Ele foi modelado utilizando o formato PlantUML.
 
-```plantuml
-@startuml
-skinparam shadowing false
-skinparam monochrome false
-skinparam ActivityBackgroundColor #F8F9F9
-skinparam ActivityBorderColor #2C3E50
-
-start
-:Executar `registrar_evento(tipo_evento, minuto, atleta, time)`;
-:Verificar se a Súmula está com status 'Aprovada';
-
-if (Súmula aprovada/homologada?) then (Sim)
-  :Lançar erro "Súmula finalizada. Requer reabertura com justificativa.";
-  stop
-else (Não / Aberta para edições)
-  :Validar se o atleta está inscrito no time participante;
-  if (Atleta pertence ao time?) then (Não)
-    :Lançar erro "Atleta não pertence ao time escalado";
-    stop
-  else (Sim)
-    :Verificar restrições da Modalidade (Ex: limite de substituições, cartões);
-    if (Evento excede limites da modalidade?) then (Sim)
-      :Lançar erro "Ação excede os limites permitidos para a modalidade";
-      stop
-    else (Não)
-      :Gravar novo objeto EventoPartida vinculado à Súmula;
-      if (Tipo de evento altera o placar (Gol ou Ponto)?) then (Sim)
-        :Incrementar pontuação correspondente na Partida;
-      else (Não)
-      endif
-      :Registrar LogAuditoria (acao = REGISTRO_EVENTO_SUMULA, id_evento);
-      :Enviar notificação de atualização em tempo real para os espectadores;
-    endif
-  endif
-endif
-stop
-@enduml
-```
+![Diagrama de Atividades](registrar-evento.png)
 
 ## Links Relacionados
 - **Arquivo de Diagrama:** [registrar_evento.puml](registrar_evento.puml)
