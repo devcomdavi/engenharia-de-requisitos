@@ -1,0 +1,42 @@
+@startuml
+skinparam shadowing false
+skinparam monochrome false
+skinparam ActivityBackgroundColor #F8F9F9
+skinparam ActivityBorderColor #2C3E50
+
+start
+:Solicitar `alterar_senha(nova_senha)`;
+:Verificar se nova_senha é idêntica à senha atual;
+if (Senhas iguais?) then (Sim)
+  :Lançar erro "Nova senha não pode ser idêntica à senha atual";
+  stop
+else (Não)
+  :Validar critérios mínimos de segurança;
+  split
+    :Verificar tamanho mínimo (>= 8 caracteres);
+  split etc
+    :Verificar pelo menos 1 letra maiúscula;
+  split etc
+    :Verificar pelo menos 1 letra minúscula;
+  split etc
+    :Verificar pelo menos 1 número;
+  split etc
+    :Verificar se não é uma senha comum (dicionário);
+  end split
+  
+  if (Atende a todos os critérios?) then (Não)
+    :Lançar erro "Senha não atende aos requisitos de complexidade mínimos";
+    stop
+  else (Sim)
+    :Gerar hash da nova senha com PBKDF2 e Salt;
+    :Atualizar hash de senha no registro de Usuário;
+    if (primeiro_login é True?) then (Sim)
+      :Atualizar primeiro_login para False;
+    else (Não)
+    endif
+    :Gravar LogAuditoria (acao = ALTERACAO_SENHA, id_usuario);
+    :Retornar true;
+  endif
+endif
+stop
+@enduml
